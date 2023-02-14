@@ -31,31 +31,31 @@ module.exports = {
     capabilities: [
       {
         name: 'AZURE_CLU_ENDPOINT_URL',
-        label: 'AZURE CLU Endpoint URL',
-        description: 'By default, "https://.api.cognitiveservices.azure.com" will be used',
+        label: 'Endpoint URL',
+        description: 'Azure CLU endpoint URL',
         type: 'url',
-        required: false
+        required: true
       },
       {
-        name: 'LUIS_APP_ID',
-        label: 'LUIS App ID',
-        description: 'Open your LUIS project, then go to Manage, Application Information, Application ID',
+        name: 'AZURE_CLU_ENDPOINT_KEY',
+        label: 'Endpoint Key',
+        description: 'Azure CLU Subscription Key',
+        type: 'secret',
+        required: true
+      },
+      {
+        name: 'AZURE_CLU_PROJECT_NAME',
+        label: 'Project Name',
+        description: 'Azure CLU Project Name',
         type: 'string',
         required: true
       },
       {
-        name: 'LUIS_ENDPOINT_KEY',
-        label: 'LUIS Endpoint Key',
-        description: 'Azure Subscription Key for prediction - open your LUIS project, then go to Manage, Azure Resources',
-        type: 'secret',
+        name: 'AZURE_CLU_DEPLOYMENT_NAME',
+        label: 'Deployment Name',
+        description: 'Azure CLU Deployment Name',
+        type: 'string',
         required: true
-      },
-      {
-        name: 'LUIS_AUTHORING_KEY',
-        label: 'LUIS Authoring Key',
-        description: 'Azure Subscription Key for authoring - open your LUIS project, then go to Manage, Azure Resources',
-        type: 'secret',
-        required: false
       }
     ]
   }
