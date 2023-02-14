@@ -1,0 +1,26 @@
+entities
+
+#me
+Book me a flight to Rio next week
+
+#bot
+ENTITY_CONTENT geography|Rio
+ENTITY_CONTENT Date|next week
+
+#me
+Book two tickets to Arrabury Airport
+
+#bot
+ENTITY_CONTENT airport|Arrabury Airport
+
+#me
+Book two tickets to london
+
+#bot
+ENTITY_CONTENT geography|london
+
+#me
+Germany
+
+#bot
+ENTITY_CONTENT geography|Germany

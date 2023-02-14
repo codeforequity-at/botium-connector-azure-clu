@@ -1,0 +1,7 @@
+intents
+
+#me
+Book two tickets to Arrabury Airport
+
+#bot
+INTENT book_a_flight
