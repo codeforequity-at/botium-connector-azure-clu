@@ -1,0 +1,7 @@
+Orchestration To Internal
+
+#me
+Some Text for SomeInternalIntent
+
+#bot
+INTENT SomeInternalIntent

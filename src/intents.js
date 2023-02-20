@@ -1,69 +1,68 @@
-const request = require('request-promise-native')
 const debug = require('debug')('botium-connector-azure-clu-intents')
-// we use the older version because the client lib uses it
-const DEFAULT_API_VERSION = '2022-05-01'
+const axios = require('axios')
+const DEFAULT_API_VERSION = require('./connector').DEFAULT_API_VERSION
 
-const importIt = async ({ caps, dataset, language }) => {
+const axiosCustomError = async (options, msg) => {
+  try {
+    return await axios(options)
+  } catch (err) {
+    throw new Error(`${msg}: ${err.message}`)
+  }
+}
+const _importIt = async ({ caps, dataset, language }) => {
   const requestOptionsImport = {
-    uri: `${caps.AZURE_CLU_ENDPOINT_URL}/language/authoring/analyze-conversations/projects/${caps.AZURE_CLU_PROJECT_NAME}/:export?stringIndexType=Utf16CodeUnit&api-version=${caps.AZURE_CLU_API_VERSION || DEFAULT_API_VERSION}`,
+    url: `${caps.AZURE_CLU_ENDPOINT_URL}/language/authoring/analyze-conversations/projects/${caps.AZURE_CLU_PROJECT_NAME}/:export?stringIndexType=Utf16CodeUnit&api-version=${caps.AZURE_CLU_API_VERSION || DEFAULT_API_VERSION}`,
     headers: {
       'Ocp-Apim-Subscription-Key': caps.AZURE_CLU_ENDPOINT_KEY
     },
-    method: 'POST',
-    json: true,
-    transform: (body, response) => ({
-      headers: response.headers,
-      data: body
-    })
+    method: 'post'
   }
   debug(`import request: ${JSON.stringify(requestOptionsImport, null, 2)}`)
-  const responseImport = await request(requestOptionsImport)
+  const responseImport = await axiosCustomError(requestOptionsImport, 'Import failed')
   const operationLocation = (responseImport && responseImport.headers && responseImport.headers['operation-location']) ? responseImport.headers['operation-location'] : null
   if (!operationLocation) {
-    throw new Error(`Operation Location not found in ${JSON.stringify(responseImport)}`)
+    throw new Error(`Operation Location not found in ${JSON.stringify(responseImport.headers)}`)
   }
 
   debug(`import status request: ${JSON.stringify(requestOptionsImport, null, 2)}`)
   const requestOptionsImportStatus = {
-    uri: operationLocation,
+    url: operationLocation,
     headers: {
       'Ocp-Apim-Subscription-Key': caps.AZURE_CLU_ENDPOINT_KEY
     },
-    method: 'GET',
-    json: true
+    method: 'get'
   }
   let resultUrl = null
   let responseImportStatus
   for (let tries = 0; tries < 10 && !resultUrl; tries++) {
-    responseImportStatus = await request(requestOptionsImportStatus)
-    if (responseImportStatus && responseImportStatus.errors && responseImportStatus.errors.length > 0) {
+    responseImportStatus = await axiosCustomError(requestOptionsImportStatus, 'Import status failed')
+    if (responseImportStatus.data.errors?.length > 0) {
       throw new Error(`Import failed: ${JSON.stringify(responseImportStatus.errors)}`)
     }
 
-    if (responseImportStatus && ['cancelled', 'cancelling', 'failed'].includes(responseImportStatus.status)) {
-      throw new Error(`Import failed, job status is: ${responseImportStatus.status}`)
+    if (['cancelled', 'cancelling', 'failed'].includes(responseImportStatus.data.status)) {
+      throw new Error(`Import failed, job status is: ${responseImportStatus.data.status}`)
     }
 
-    resultUrl = responseImportStatus.resultUrl
+    resultUrl = responseImportStatus.data.resultUrl
     if (!resultUrl) {
       debug(`Try ${tries + 1} Result URI is not ready yet. Waiting 1s.`)
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
   if (!resultUrl) {
-    throw new Error(`Failed to retrieve the result URL: ${JSON.stringify(responseImportStatus)}`)
+    throw new Error(`Failed to retrieve the result URL: ${JSON.stringify(responseImportStatus.data)}`)
   }
   const requestOptionsDownload = {
-    uri: resultUrl,
+    url: resultUrl,
     headers: {
       'Ocp-Apim-Subscription-Key': caps.AZURE_CLU_ENDPOINT_KEY
     },
-    method: 'GET',
-    json: true
+    method: 'get'
   }
-  const responseDownload = await request(requestOptionsDownload)
+  const responseDownload = await axiosCustomError(requestOptionsDownload, 'Download failed')
   const utterances = {}
-  for (const u of (responseDownload.assets.utterances || [])) {
+  for (const u of (responseDownload.data.assets.utterances || [])) {
     if ((!language || language === u.language) && (!dataset || dataset === u.dataset)) {
       if (!utterances[u.intent]) {
         utterances[u.intent] = {
@@ -76,7 +75,7 @@ const importIt = async ({ caps, dataset, language }) => {
     }
   }
 
-  return { chatbotData: responseDownload, rawUtterances: utterances }
+  return { chatbotData: responseDownload.data, rawUtterances: utterances }
 }
 /**
  *
@@ -88,7 +87,7 @@ const importIt = async ({ caps, dataset, language }) => {
  */
 const importAzureCLUIntents = async ({ caps, buildconvos, dataset, language }) => {
   try {
-    const downloadResult = await importIt({ caps, dataset, language })
+    const downloadResult = await _importIt({ caps, dataset, language })
     const utterances = Object.values(downloadResult.rawUtterances)
     const convos = []
     if (buildconvos) {
@@ -126,9 +125,9 @@ const importAzureCLUIntents = async ({ caps, buildconvos, dataset, language }) =
   }
 }
 
-const exportLuisIntents = async ({ caps, uploadmode, dataset, language }, { convos, utterances }, { statusCallback }) => {
+const exportAzureCLUIntents = async ({ caps, uploadmode, dataset, language }, { convos, utterances }, { statusCallback }) => {
   try {
-    const { chatbotData, rawUtterances } = await importIt({ caps, dataset, language })
+    const { chatbotData, rawUtterances } = await _importIt({ caps, dataset, language })
 
     if (uploadmode === 'replace') {
       chatbotData.assets.intents = []
@@ -148,50 +147,44 @@ const exportLuisIntents = async ({ caps, uploadmode, dataset, language }, { conv
         for (const u of list) {
           const isNewUtterance = isNewIntent || !rawUtterances[name] || rawUtterances[name].utterances.indexOf(u) < 0
           if (isNewUtterance) {
-            chatbotData.assets.utterances.push({ intent: name, text: u })
+            chatbotData.assets.utterances.push({ intent: name, text: u, dataset: dataset || 'Train', language: language || 'en-us' })
           }
         }
       }
     }
 
     const requestOptionsExport = {
-      uri: `${caps.AZURE_CLU_ENDPOINT_URL}/language/authoring/analyze-conversations/projects/${caps.AZURE_CLU_PROJECT_NAME}/:import?stringIndexType=Utf16CodeUnit&api-version=${caps.AZURE_CLU_API_VERSION || DEFAULT_API_VERSION}`,
+      url: `${caps.AZURE_CLU_ENDPOINT_URL}/language/authoring/analyze-conversations/projects/${caps.AZURE_CLU_PROJECT_NAME}/:import?stringIndexType=Utf16CodeUnit&api-version=${caps.AZURE_CLU_API_VERSION || DEFAULT_API_VERSION}`,
       headers: {
         'Ocp-Apim-Subscription-Key': caps.AZURE_CLU_ENDPOINT_KEY
       },
       method: 'POST',
-      body: chatbotData,
-      json: true,
-      transform: (body, response) => ({
-        headers: response.headers,
-        data: body
-      })
+      body: chatbotData
     }
     debug(`export request: ${JSON.stringify(requestOptionsExport, null, 2)}`)
-    const responseExport = await request(requestOptionsExport)
-    const operationLocation = (responseExport && responseExport.headers && responseExport.headers['operation-location']) ? responseExport.headers['operation-location'] : null
+    const responseExport = await axiosCustomError(requestOptionsExport, 'Export failed')
+    const operationLocation = responseExport.headers['operation-location']
     if (!operationLocation) {
-      throw new Error(`Operation Location not found in ${JSON.stringify(responseExport)}`)
+      throw new Error(`Operation Location not found in ${JSON.stringify(responseExport.headers)}`)
     }
 
     debug(`export status request: ${JSON.stringify(requestOptionsExport, null, 2)}`)
     const requestOptionsExportStatus = {
-      uri: operationLocation,
+      url: operationLocation,
       headers: {
         'Ocp-Apim-Subscription-Key': caps.AZURE_CLU_ENDPOINT_KEY
       },
-      method: 'GET',
-      json: true
+      method: 'GET'
     }
     let responseExportStatus
     for (let tries = 0; tries < 10 && (responseExportStatus && responseExportStatus.status === 'succeeded'); tries++) {
-      responseExportStatus = await request(requestOptionsExportStatus)
-      if (responseExportStatus && responseExportStatus.errors && responseExportStatus.errors.length > 0) {
-        throw new Error(`Export failed: ${JSON.stringify(responseExportStatus.errors)}`)
+      responseExportStatus = await axiosCustomError(requestOptionsExportStatus, 'Export status failed')
+      if (responseExportStatus.data.errors?.length > 0) {
+        throw new Error(`Export failed: ${JSON.stringify(responseExportStatus.data.errors)}`)
       }
 
-      if (responseExportStatus && ['cancelled', 'cancelling', 'failed'].includes(responseExportStatus.status)) {
-        throw new Error(`Export failed, job status is: ${responseExportStatus.status}`)
+      if (['cancelled', 'cancelling', 'failed'].includes(responseExportStatus.data.status)) {
+        throw new Error(`Export failed, job status is: ${responseExportStatus.data.status}`)
       }
     }
   } catch (err) {
@@ -199,11 +192,13 @@ const exportLuisIntents = async ({ caps, uploadmode, dataset, language }, { conv
   }
 }
 
+// caps, buildconvos, dataset, language
 module.exports = {
-  importHandler: ({ caps, versionId, buildconvos, ...rest } = {}) => importAzureCLUIntents({
+  importHandler: ({ caps, buildconvos, dataset, language, ...rest } = {}) => importAzureCLUIntents({
     caps,
-    versionId,
     buildconvos,
+    dataset,
+    language,
     ...rest
   }),
   importArgs: {
@@ -212,23 +207,26 @@ module.exports = {
       type: 'json',
       skipCli: true
     },
-    versionId: {
-      describe: 'LUIS app version (will use active version by default)',
-      type: 'string'
-    },
     buildconvos: {
       describe: 'Build convo files for intent assertions (otherwise, just write utterances files)',
       type: 'boolean',
       default: false
+    },
+    dataset: {
+      describe: 'Type of the dataset (Train, or Test)',
+      choices: ['Train', 'Test']
+    },
+    language: {
+      describe: 'Language (like en-us)',
+      type: 'string',
+      default: false
     }
   },
-  exportHandler: ({ caps, uploadmode, versionId, newVersionName, publish, waitfortraining, ...rest } = {}, { convos, utterances } = {}, { statusCallback } = {}) => exportLuisIntents({
+  exportHandler: ({ caps, uploadmode, dataset, language, ...rest } = {}, { convos, utterances } = {}, { statusCallback } = {}) => exportAzureCLUIntents({
     caps,
     uploadmode,
-    versionId,
-    newVersionName,
-    publish,
-    waitfortraining,
+    dataset,
+    language,
     ...rest
   }, {
     convos,
@@ -241,26 +239,17 @@ module.exports = {
       skipCli: true
     },
     uploadmode: {
-      describe: 'Appending LUIS intents and user examples or replace them',
+      describe: 'Appending Azure CLU intents and user examples or replace them',
       choices: ['append', 'replace'],
       default: 'append'
     },
-    versionId: {
-      describe: 'LUIS app version (will use active version by default)',
+    dataset: {
+      describe: 'Type of the dataset (Train, or Test)',
+      choices: ['Train', 'Test']
+    },
+    language: {
+      describe: 'Language (like en-us)',
       type: 'string'
-    },
-    newVersionName: {
-      describe: 'New LUIS app version name (if not given will be generated)',
-      type: 'string'
-    },
-    publish: {
-      describe: 'Publishes the LUIS app version',
-      choices: ['staging', 'production']
-    },
-    waitfortraining: {
-      describe: 'Wait until version finished training',
-      type: 'boolean',
-      default: false
     }
   }
 }

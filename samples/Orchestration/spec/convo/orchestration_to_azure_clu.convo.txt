@@ -1,0 +1,8 @@
+Orchestration To Azure CLU
+
+#me
+Some Sentence for SomeExternalIntent
+
+#bot
+INTENT SomeExternalIntent
+ENTITY_CONTENT TestEntity|SomeExternalIntent
