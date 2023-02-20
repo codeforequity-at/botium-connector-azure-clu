@@ -90,7 +90,7 @@ module.exports = {
       },
       {
         name: 'AZURE_CLU_LANGUAGE',
-        label: 'Language of the conversation',
+        label: 'Language of the conversation (default: autodetect)',
         description: 'API Language of the conversation',
         type: 'choice',
         required: false,
