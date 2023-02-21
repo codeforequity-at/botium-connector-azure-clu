@@ -57,36 +57,7 @@ module.exports = {
         label: 'Direct Target',
         description: 'Azure CLU Participant ID (Keep it empty to use random)',
         type: 'string',
-        required: false,
-        advanced: true
-      },
-      {
-        name: 'AZURE_CLU_API_VERSION',
-        label: 'API Version',
-        description: 'API Version',
-        type: 'choice',
-        required: false,
-        advanced: true,
-        choices: [
-          { key: '2022-05-01', name: '2022-05-01 (Production)' },
-          // { key: '2022-05-15-preview', name: '2022-05-15-preview (Experimental)' }, // It is the default for the client lib
-          // // So it can have a sense to offer it too. But I did not seen it docu
-          { key: '2022-10-01-preview', name: '2022-10-01-preview (Experimental)' }
-        ]
-      },
-      {
-        name: 'AZURE_CLU_API_VERSION',
-        label: 'API Version',
-        description: 'API Version',
-        type: 'choice',
-        required: false,
-        advanced: true,
-        choices: [
-          { key: '2022-05-01', name: '2022-05-01 (Production)' },
-          // { key: '2022-05-15-preview', name: '2022-05-15-preview (Experimental)' }, // It is the default for the client lib
-          // // So it can have a sense to offer it too. But I did not seen it docu
-          { key: '2022-10-01-preview', name: '2022-10-01-preview (Experimental)' }
-        ]
+        required: false
       },
       {
         name: 'AZURE_CLU_LANGUAGE',
@@ -94,7 +65,6 @@ module.exports = {
         description: 'API Language of the conversation',
         type: 'choice',
         required: false,
-        advanced: true,
         choices: [
           { key: 'en-us', name: 'English (US)' },
           { key: 'af', name: 'Afrikaans' },
@@ -191,6 +161,20 @@ module.exports = {
           { key: 'zh-hans', name: 'Chinese (Simplified)' },
           { key: 'zh-hant', name: 'Chinese (Traditional)' },
           { key: 'zu', name: 'Zulu' }
+        ]
+      },
+      {
+        name: 'AZURE_CLU_API_VERSION',
+        label: 'API Version',
+        description: 'API Version',
+        type: 'choice',
+        required: false,
+        advanced: true,
+        choices: [
+          { key: '2022-05-01', name: '2022-05-01 (Production)' },
+          // { key: '2022-05-15-preview', name: '2022-05-15-preview (Experimental)' }, // It is the default for the client lib
+          // // So it can have a sense to offer it too. But I did not seen it docu
+          { key: '2022-10-01-preview', name: '2022-10-01-preview (Experimental)' }
         ]
       },
       {
