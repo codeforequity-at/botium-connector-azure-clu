@@ -1,6 +1,10 @@
 const BotiumConnectorAzureCLU = require('./src/connector')
 const { importHandler, importArgs } = require('./src/intents')
 const { exportHandler, exportArgs } = require('./src/intents')
+const fs = require('fs')
+const path = require('path')
+
+const logo = fs.readFileSync(path.join(__dirname, 'logo.png')).toString('base64')
 
 module.exports = {
   PluginVersion: 1,
@@ -15,13 +19,16 @@ module.exports = {
   },
   PluginDesc: {
     name: 'Azure Conversational Language Understanding',
+    avatar: logo,
     provider: 'Microsoft',
     features: {
       intentResolution: true,
       intentConfidenceScore: true,
       alternateIntents: true,
       entityResolution: true,
-      entityConfidenceScore: false
+      entityConfidenceScore: false,
+      testCaseGeneration: true,
+      testCaseExport: true
     },
     capabilities: [
       {

@@ -4,7 +4,7 @@ const DEFAULT_API_VERSION = require('./connector').DEFAULT_API_VERSION
 
 const axiosCustomError = async (options, msg) => {
   try {
-    return await axios(options)
+    return axios(options)
   } catch (err) {
     throw new Error(`${msg}: ${err.message}`)
   }
@@ -127,7 +127,11 @@ const importAzureCLUIntents = async ({ caps, buildconvos, dataset, language }) =
 
 const exportAzureCLUIntents = async ({ caps, uploadmode, dataset, language }, { convos, utterances }, { statusCallback }) => {
   try {
-    const { chatbotData, rawUtterances } = await _importIt({ caps, dataset, language })
+    const { chatbotData, rawUtterances } = await _importIt({
+      caps,
+      dataset,
+      language
+    })
 
     if (uploadmode === 'replace') {
       chatbotData.assets.intents = []
@@ -152,14 +156,13 @@ const exportAzureCLUIntents = async ({ caps, uploadmode, dataset, language }, { 
         }
       }
     }
-
     const requestOptionsExport = {
       url: `${caps.AZURE_CLU_ENDPOINT_URL}/language/authoring/analyze-conversations/projects/${caps.AZURE_CLU_PROJECT_NAME}/:import?stringIndexType=Utf16CodeUnit&api-version=${caps.AZURE_CLU_API_VERSION || DEFAULT_API_VERSION}`,
       headers: {
         'Ocp-Apim-Subscription-Key': caps.AZURE_CLU_ENDPOINT_KEY
       },
       method: 'POST',
-      body: chatbotData
+      data: chatbotData
     }
     debug(`export request: ${JSON.stringify(requestOptionsExport, null, 2)}`)
     const responseExport = await axiosCustomError(requestOptionsExport, 'Export failed')
@@ -180,7 +183,7 @@ const exportAzureCLUIntents = async ({ caps, uploadmode, dataset, language }, { 
     for (let tries = 0; tries < 10 && (responseExportStatus && responseExportStatus.status === 'succeeded'); tries++) {
       responseExportStatus = await axiosCustomError(requestOptionsExportStatus, 'Export status failed')
       if (responseExportStatus.data.errors?.length > 0) {
-        throw new Error(`Export failed: ${JSON.stringify(responseExportStatus.data.errors)}`)
+        throw new Error(`Export failed with errors: ${JSON.stringify(responseExportStatus.data.errors)}`)
       }
 
       if (['cancelled', 'cancelling', 'failed'].includes(responseExportStatus.data.status)) {
@@ -188,8 +191,10 @@ const exportAzureCLUIntents = async ({ caps, uploadmode, dataset, language }, { 
       }
     }
   } catch (err) {
-    throw new Error(`Export failed: ${err.message}`)
+    throw new Error(`Export process failed: ${err.message}`)
   }
+
+  debug('export finished')
 }
 
 // caps, buildconvos, dataset, language
