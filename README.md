@@ -2,7 +2,7 @@
 
 [![NPM](https://nodei.co/npm/botium-connector-azure-clu.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/botium-connector-azure-clu/)
 
-[![Codeship Status for codeforequity-at/botium-connector-azure-clu](https://app.codeship.com/projects/339e78b1-0906-4972-afba-fb5a4488db87/status?branch=master)](https://app.codeship.com/projects/462729)
+[![Codeship Status for codeforequity-at/botium-connector-azure-clu](https://app.codeship.com/projects/339e78b1-0906-4972-afba-fb5a4488db87/status?branch=main)](https://app.codeship.com/projects/462729)
 [![npm version](https://badge.fury.io/js/botium-connector-azure-clu.svg)](https://badge.fury.io/js/botium-connector-azure-clu)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
