@@ -59,8 +59,9 @@ typings/
 
 # next.js build output
 .next
-/.idea
 
+.idea
 package-lock.json
 yarn.lock
-*.local.json
+**/botium.local.json
+**/botium.json
