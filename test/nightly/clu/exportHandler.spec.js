@@ -17,5 +17,5 @@ describe('exporthandler', function () {
     }, {
       statusCallback: (data) => console.log(data)
     })
-  }).timeout(50000)
+  }).timeout(100000)
 })

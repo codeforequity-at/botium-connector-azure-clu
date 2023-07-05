@@ -22,7 +22,7 @@ describe('connector', function () {
     await this.connector.UserSays({ messageText: 'Hello' })
     const botMsg = await this.botMsgPromise
     assert.equal(botMsg?.nlp?.intent?.name, 'greet')
-  }).timeout(10000)
+  }).timeout(50000)
 
   afterEach(async function () {
     await this.connector.Stop()

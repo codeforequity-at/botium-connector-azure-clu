@@ -17,5 +17,5 @@ describe('importhandler', function () {
     assert.equal(utterance.name, 'greet')
     assert.isTrue(utterance.utterances.includes('Hi'))
     assert.isTrue(utterance.utterances.includes('Hey'))
-  }).timeout(10000)
+  }).timeout(50000)
 })
