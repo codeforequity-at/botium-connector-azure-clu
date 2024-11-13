@@ -1,6 +1,6 @@
 {
   "name": "botium-connector-azure-clu",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Botium Connector for Azure Conversational Language Understanding",
   "main": "dist/botium-connector-azure-clu-cjs.js",
   "module": "dist/botium-connector-azure-clu-es.js",
@@ -51,8 +51,7 @@
     "@babel/runtime": "^7.9.6",
     "axios": "^1.3.3",
     "debug": "^4.3.4",
-    "request": "^2.88.2",
-    "request-promise-native": "^1.0.9",
+    "uuid": "^11.0.3",
     "yargs": "^17.6.2"
   }
 }
