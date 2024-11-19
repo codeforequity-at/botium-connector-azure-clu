@@ -11,6 +11,7 @@
     "build": "npm run eslint && rollup -c && cp logo.png dist",
     "eslint": "eslint index.js src",
     "eslint-fix": "eslint --fix index.js src",
+    "test": "echo \"Placeholder\"",
     "test-nightly": "mocha test/nightly/clu/**/*spec.js",
     "test-nightly-orchestration": "mocha test/nightly/orchestration/**/*spec.js"
   },
